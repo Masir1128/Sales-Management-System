@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+	<link rel="stylesheet" type="text/css" href="layui/css/layui.css"  media="all">
+	<script type="text/javascript" src="layui/layui.js"></script>
+	<script src="layui/jquery-1.8.3.min.js"></script>
+	<script src="https://cdn.staticfile.org/echarts/4.3.0/echarts.min.js"></script>
+</head>
+<body>
+	<div class="header" style="width: 100%;height: 38px;background-color: #F5F5F5">
+		<div class="layui-inline">
+			<div class="layui-inline">
+				<label class="layui-form-label">人员查询</label>
+				<div class="layui-input-inline" >
+					<select id = "lv1"  name="lv1" style="width: 200px;height: 30px" >
+						<option selected="selected" value="">请选择</option>
+					</select>
+				</div>
+			</div>
+
+			<div class="layui-inline">
+				<label class="layui-form-label">起始时间</label>
+				<div class="layui-input-inline">
+					<input type="text" name="time1" id="date1" lay-verify="date" placeholder="起始时间" autocomplete="off" class="layui-input"  required="required">
+				</div>
+			</div>
+
+			<div class="layui-inline">
+				<label class="layui-form-label">结束时间</label>
+				<div class="layui-input-inline">
+					<input type="text" name="time2" id="date2" lay-verify="date" placeholder="终止时间" autocomplete="off" class="layui-input"  required="required">
+				</div>
+			</div>
+			<div class="layui-inline">
+				<button type="button" class="layui-btn layui-btn-sm layui-btn-normal" onclick="add()">点击查询</button>
+			</div>
+		</div>
+	</div>
+
+	<div id="main" style="width: 1500px;height:800px;"></div>
+	<script type="text/javascript">
+		var qw = "";
+		// 获取总工时，总表
+		$(function(){
+			$.ajax({
+				"url":"BusVO",
+				"type":"POST",
+				"success":function(data){
+					console.log(data.names)
+					console.log(data.values)
+					// 基于准备好的dom，初始化echarts实例
+					var myChart = echarts.init(document.getElementById('main'));
+					// 指定图表的配置项和数据
+					var option = {
+						title : {
+							text : '评估工时统计表'
+						},
+						tooltip:{
+							show : true,
+							trigger: 'axis',
+							axisPointer: {            // 坐标轴指示器，坐标轴触发有效
+								type: 'line'        // 默认为直线，可选为：'line' | 'shadow'
+							}
+						},
+						legend:{
+							data : ['工时/h']
+						},
+						grid: {
+							y2: 150  //增加柱形图纵向的高度
+						},
+					    xAxis: {
+					        //type: 'category',
+					        data: data.names,
+							axisLabel:{
+								interval:0,//横轴信息全部显示
+								rotate:-65,//-15度角倾斜显示
+							},
+
+					    },
+					    yAxis: {
+					        type: 'value'
+					    },
+					    series: [                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        {
+							name : "工时/h",
+					        data: data.values,
+					        type: 'bar',
+							label: {
+								show: true,
+								position: 'insideTop',
+								fontSize: 10,
+							},
+					    }],
+						itemStyle: {
+							color: function(params) { //工时超过阈值显示红色，反之显示绿色
+								if (data.values[params.dataIndex] > 10) {
+									return 'red';
+								} else {
+									return 'green';
+								}
+							}
+						}
+					};
+					// 使用刚指定的配置项和数据显示图表。
+					myChart.setOption(option);
+					myChart.on('click', function(params) {
+						data.rem[params.dataIndex] = data.rem[params.dataIndex].replace('#','');
+						var redmine_link = 'https://rm.qkmtech.com/issues/' + data.rem[params.dataIndex];
+						console.log(redmine_link);
+						window.open (redmine_link);
+					});
+				}
+			});
+		})
+
+		//响应搜索按钮，根据人员进行查询
+		$(function(){
+			$.ajax({
+				"url": "List2",
+				"type": "get",
+				"dataType": "json",
+				"success": function(json){
+					console.log(json.data);
+					for(var i=0;i<json.data.length;i++){
+						var ch = json.data[i].name;
+
+						$("#lv1").append("<option>"+ch+"</option>")
+					}
+				}
+			})
+		})
+		/**
+		 * 描述：查询
+		 */
+		$("#lv1").change(function(){
+			qw=$("#lv1").val(); //获取用户选择的人员
+			$(function(){
+				$.ajax({
+					"url":"BusVOByManager?name="+qw,
+					"type":"POST",
+					"success":function(data){
+						console.log(data.names)
+						console.log(data.values)
+						// 基于准备好的dom，初始化echarts实例
+						var myChart = echarts.init(document.getElementById('main'));
+						// 指定图表的配置项和数据
+						var option = {
+							title : {
+								text : '评估工时统计表'
+							},
+							tooltip:{
+								show : true,
+								trigger: 'axis',
+								axisPointer: {            // 坐标轴指示器，坐标轴触发有效
+									type: 'line'        // 默认为直线，可选为：'line' | 'shadow'
+								}
+							},
+							legend:{
+								data : ['工时/h']
+							},
+							grid: {
+								y2: 150  //增加柱形图纵向的高度
+							},
+							xAxis: {
+								//type: 'category',
+								sizes:20,
+								data: data.names,
+								axisLabel:{
+									interval:0,//横轴信息全部显示
+									rotate:-65,//-15度角倾斜显示
+								},
+
+							},
+							yAxis: {
+								type: 'value'
+							},
+							series: [{
+								name : "工时/h",
+								data: data.values,
+								type: 'bar',
+								barMaxWidth:30,//最大宽度
+								label: {
+									show: true,
+									position: 'insideTop',
+									fontSize: 10,
+								},
+							}],
+							itemStyle: {
+								color: function(params) { //工时超过阈值显示红色，反之显示绿色
+									if (data.values[params.dataIndex] > 10) {
+										return 'red';
+									} else {
+										return 'green';
+									}
+								}
+							}
+						};
+						// 使用刚指定的配置项和数据显示图表。
+						myChart.setOption(option);
+						myChart.on('click', function(params) {
+							data.rem[params.dataIndex] = data.rem[params.dataIndex].replace('#','');
+							var redmine_link = 'https://rm.qkmtech.com/issues/' + data.rem[params.dataIndex];
+							console.log(redmine_link);
+							window.open (redmine_link);
+						});
+					}
+				});
+			})
+		})
+
+		layui.use('element', function(){
+			var element = layui.element;
+		});
+
+		layui.use(['form', 'layedit', 'laydate'], function(){
+
+			var form = layui.form
+					,layer = layui.layer
+					,layedit = layui.layedit
+					,laydate = layui.laydate;
+			form.render();
+
+			//日期
+			laydate.render({
+				elem: '#date1'
+			});
+			laydate.render({
+				elem: '#date2'
+			});
+		});
+
+		/**
+		 * 描述:这个函数是用来获取起始时间+终止时间+销售人员，来查询数据库
+		 * 输入：null
+		 *
+		 */
+		function add(){
+			var startTime = jQuery("#date1").val();  // 获取起始时间
+			var endTime = jQuery("#date2").val();    // 获取终止时间
+			// console.log(qw);
+			// console.log(startTime);
+			// console.log(typeof(startTime));
+			// console.log(endTime);
+			$.ajax({
+				"url":"BusVOTime?name="+qw+"&st="+startTime+"&et="+endTime,
+				"type":"POST",
+				"success":function(data){
+					console.log(data.names)
+					console.log(data.values)
+					// 基于准备好的dom，初始化echarts实例
+					var myChart = echarts.init(document.getElementById('main'));
+					// 指定图表的配置项和数据
+					var option = {
+						title : {
+							text : '评估工时统计表'
+						},
+						tooltip:{
+							show : true,
+							trigger: 'axis',
+							axisPointer: {            // 坐标轴指示器，坐标轴触发有效
+								type: 'line'        // 默认为直线，可选为：'line' | 'shadow'
+							}
+						},
+						legend:{
+							data : ['工时/h']
+						},
+						grid: {
+							y2: 150  //增加柱形图纵向的高度
+						},
+						xAxis: {
+							//type: 'category',
+							data: data.names,
+							axisLabel:{
+								interval:0,//横轴信息全部显示
+								rotate:-65,//-15度角倾斜显示
+							},
+
+						},
+						yAxis: {
+							type: 'value'
+						},
+						series: [{
+							name : "工时/h",
+							data: data.values,
+							type: 'bar',
+							label: {
+								show: true,
+								position: 'insideTop',
+								fontSize: 10,
+							},
+						}],
+						itemStyle: {
+							color: function(params) { //工时超过阈值显示红色，反之显示绿色
+								if (data.values[params.dataIndex] > 10) {
+									return 'red';
+								} else {
+									return 'green';
+								}
+							}
+						}
+					};
+					// 使用刚指定的配置项和数据显示图表。
+					myChart.setOption(option);
+					myChart.on('click', function(params) {
+						data.rem[params.dataIndex] = data.rem[params.dataIndex].replace('#','');
+						var redmine_link = 'https://rm.qkmtech.com/issues/' + data.rem[params.dataIndex];
+						console.log(redmine_link);
+						window.open (redmine_link);
+					});
+				}
+			});
+		}
+    </script>
+</body>
+</html>
